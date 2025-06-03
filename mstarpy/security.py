@@ -1,16 +1,24 @@
 import datetime
 import re
 import requests
+import uuid
+import time
+import random
 
 from .error import not_200_response
 from .search import search_funds, search_stock, token_chart
-from .utils import APIKEY, SITE, random_user_agent
+from .utils import APIKEY, SITE, ASSET_TYPE, random_user_agent
+from .api import request_with_retry
+from typing import List, Dict, Any, Optional, Union
+from tenacity import retry, stop_after_attempt, wait_exponential
+
 
 
 # with Universe field, we can detect the asset class
 # done find all stock echange and create a search_equity method
 # add parameter exchange to Security class and search stocks if stock and exchange
 
+INTERNAL_SERVER_ERROR = "Something went wrong on our side!  For more details, please contact Analytics Lab support team at Morningstar. We apologize for any inconvenience this may have caused"
 
 class Security:
     """
@@ -19,9 +27,11 @@ class Security:
     Args:
         term (str): text to find a fund can be a name, part of a name or the isin of the funds
         country (str) : text for code ISO 3166-1 alpha-2 of country, should be '' for etf
+        exchange (str) : ISO 10383 code for exchange where the security is listed 
         pageSize (int): number of funds to return
         itemRange (int) : index of funds to return (must be inferior to PageSize)
         proxies = (dict) : set the proxy if needed , example : {"http": "http://host:port","https": "https://host:port"}
+        params = (dict) : parameters to be used for manual object configuration
 
     Examples:
         >>> Security('0P0000712R', "ca", 9, 0)
@@ -43,6 +53,7 @@ class Security:
         itemRange: int = 0,
         filters: dict = {},
         proxies: dict = {},
+        params: Optional[Dict[str, Any]] = None,
     ):
 
         if not isinstance(country, str):
@@ -85,10 +96,14 @@ class Security:
 
         code_list = []
 
+        if term is None:
+            self.__manual_configuration__(params)
+            return # Exit early if search term was supplied to allow manual object initiation
+
         if exchange:
             code_list = search_stock(
                 term,
-                ["fundShareClassId", "SecId", "TenforeId", "LegalName", "Universe"],
+                ["fundShareClassId", "SecId", "TenforeId", "LegalName", "Universe", "ISIN"],
                 exchange=exchange,
                 pageSize=pageSize,
                 filters=filters,
@@ -97,7 +112,7 @@ class Security:
         else:
             code_list = search_funds(
                 term,
-                ["fundShareClassId", "SecId", "TenforeId", "LegalName", "Universe"],
+                ["fundShareClassId", "SecId", "TenforeId", "LegalName", "Universe", "ISIN"],
                 country,
                 pageSize,
                 filters=filters,
@@ -108,12 +123,9 @@ class Security:
             if itemRange < len(code_list):
                 self.code = code_list[itemRange]["fundShareClassId"]
                 self.name = code_list[itemRange]["LegalName"]
-                if "TenforeId" in code_list[itemRange]:
-                    tenforeId = code_list[itemRange]["TenforeId"]
-                    regex = re.compile("[0-9]*\.[0-9]\.")
-                    self.isin = regex.sub("", tenforeId)
-                else:
-                    self.isin = None
+
+                if "ISIN" in code_list[itemRange]:
+                    self.isin = code_list[itemRange]["ISIN"]
 
                 universe = code_list[itemRange]["Universe"]
 
@@ -154,6 +166,46 @@ class Security:
                 )
             else:
                 raise ValueError(f"0 {self.asset_type} found with the term {term}")
+
+
+    def __manual_configuration__(self, params: Dict[str, Any]):
+        try:
+            self.code = params["fundShareClassId"]
+            self.name = params["LegalName"]
+            self.isin = params.get("ISIN", None)
+            self.exchange = params.get("ExchangeId", None)
+            self.asset_type = ASSET_TYPE.get(params["Universe"][:2], None)
+
+            self.country = "gb" # TODO Not sure what is the best way to determine which API to use
+            self.site = SITE[self.country.lower()]["site"]
+
+            self.securityDataPoints = params # Save all params in case they are needed later
+
+            # bearer_token = token_chart()
+            # # url for nav
+            # url = f"https://www.us-api.morningstar.com/md-api/proxy_request/data_point_service/v1/universes"
+            # # header with bearer token
+            # headers = {
+            #     "user-agent": random_user_agent(),
+            #     "authorization": f"Bearer {bearer_token}",
+            #     "X-API-RequestId": str(uuid.uuid4()),
+            #     "X-API-CorrelationId": str(uuid.uuid4()),
+            #     "x-feed-id": str(uuid.uuid4()),
+            #     "md-package-version": "1.11.0",
+            #     "X-API-ComponentId": "analyticslab",
+            #     "X-API-Sourceapp": "morningstar-data",
+            #     "X-API-ProductId": "Direct",
+            #     # "Content-Type": "application/json",
+            # }
+            # # response
+            # response = requests.get(url, headers=headers, proxies=self.proxies)
+            # import pdb; pdb.set_trace()
+            # print(response.status_code)
+            # print(response.text)
+        except Exception as e:
+            print(f"Error {e} when manually configuring security")
+            import pdb; pdb.set_trace()
+        
 
     def GetData(self, field, params={}, headers={}, url_suffix="data"):
         """
@@ -198,9 +250,10 @@ class Security:
 
         all_headers = default_headers | headers
 
-        response = requests.get(
-            url, params=params, headers=all_headers, proxies=self.proxies
-        )
+        response = request_with_retry("GET", url, headers=all_headers, proxies=self.proxies)
+        # response = requests.get(
+        #     url, params=params, headers=all_headers, proxies=self.proxies
+        # )
 
         not_200_response(url, response)
 
@@ -362,3 +415,5 @@ class Security:
             return result[0]["series"]
 
         return []
+
+    

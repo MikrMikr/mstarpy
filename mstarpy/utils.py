@@ -2,7 +2,52 @@ import random
 
 APIKEY = "lstzFDEOhfFNMLikKa0am9mgEKLBl49T"
 
-ASSET_TYPE = ["etf", "fund", "stock"]
+SCREENER_URL = "https://tools.morningstar.co.uk/api/rest.svc/klr5zyak8x/security/screener"
+
+
+DFLT_FIELDS = ["SecId", "TenforeId", "LegalName", "Universe", "ISIN", "ExchangeId", "ClosePrice", "OngoingCharge", "Ticker", "fundShareClassId"]
+
+
+# FUND
+# page=1&pageSize=10&sortOrder=LegalName%20asc&outputType=json&version=1&languageId=en-GB&currencyId=GBP&universeIds=FOGBR%24%24ALL%7CFOCHI%24%24ONS&securityDataPoints=
+
+FUND_DFLT_FIELDS = "SecId|Name|PriceCurrency|TenforeId|LegalName|ClosePrice|Yield_M12|CategoryName|Medalist_RatingNumber|StarRatingM255|SustainabilityRank|GBRReturnD1|GBRReturnW1|GBRReturnM1|GBRReturnM3|GBRReturnM6|GBRReturnM0|GBRReturnM12|GBRReturnM36|GBRReturnM60|GBRReturnM120|MaxFrontEndLoad|OngoingCostActual|PerformanceFeeActual|TransactionFeeActual|MaximumExitCostAcquired|FeeLevel|ManagerTenure|MaxDeferredLoad|InitialPurchase|FundTNAV|EquityStyleBox|BondStyleBox|AverageMarketCapital|AverageCreditQualityCode|EffectiveDuration|MorningstarRiskM255|AlphaM36|BetaM36|R2M36|StandardDeviationM36|SharpeM36|InvestorTypeRetail|InvestorTypeProfessional|InvestorTypeEligibleCounterparty|ExpertiseBasic|ExpertiseAdvanced|ExpertiseInformed|ReturnProfilePreservation|ReturnProfileGrowth|ReturnProfileIncome|ReturnProfileHedging|ReturnProfileOther|TrackRecordExtension"
+
+# {"total": 52511,"page": 1,"pageSize": 10,"rows": [{"SecId": "F000015O6T","Name": "1OAK Multi Asset 80 UCITS A GBP Acc","PriceCurrency": "GBP","TenforeId": "52.8.IE00BMW4T172","LegalName": "1OAK Multi Asset 80 UCITS Fund A GBP Acc","ClosePrice": 115.6957,"Yield_M12": 0,"CategoryName": "GBP Allocation 60-80% Equity","Medalist_RatingNumber": 4,"StarRatingM255": 3,"GBRReturnD1": 1.01,"GBRReturnW1": -0.38,"GBRReturnM1": 5.22,"GBRReturnM3": -0.42,"GBRReturnM6": -0.37,"GBRReturnM0": 1.1,"GBRReturnM12": 5.65,"GBRReturnM36": 6.1,"OngoingCostActual": 0.99,"TransactionFeeActual": 0.01,"FeeLevel": "avg","InitialPurchase": 1000,"FundTNAV": 11833521,"EquityStyleBox": 1,"BondStyleBox": 6,"AverageMarketCapital": 28856.26473,"AverageCreditQualityCode": "BBB","EffectiveDuration": 6.50995,"MorningstarRiskM255": 5,"AlphaM36": -1.39,"BetaM36": 1.41,"R2M36": 86.66,"StandardDeviationM36": 12.87993,"SharpeM36": 0.08772,"InvestorTypeRetail": 1,"InvestorTypeProfessional": 1,"InvestorTypeEligibleCounterparty": 1,"ExpertiseBasic": 1,"ExpertiseAdvanced": 1,"ExpertiseInformed": 1,"ReturnProfilePreservation": 2,"ReturnProfileGrowth": 1,"ReturnProfileIncome": 1,"TrackRecordExtension": false}
+
+
+# ETF
+# page=1&pageSize=10&sortOrder=LegalName%20asc&outputType=json&version=1&languageId=en-GB&currencyId=GBP&universeIds=ETEXG%24XLON%7CETEUR%24%24ALL&securityDataPoints=
+
+ETF_DFLT_FIELDS = "SecId|Name|PriceCurrency|TenforeId|LegalName|ClosePrice|Yield_M12|OngoingCharge|CategoryName|Medalist_RatingNumber|StarRatingM255|SustainabilityRank|GBRReturnD1|GBRReturnW1|GBRReturnM1|GBRReturnM3|GBRReturnM6|GBRReturnM0|GBRReturnM12|GBRReturnM36|GBRReturnM60|GBRReturnM120|MaxFrontEndLoad|ManagerTenure|MaxDeferredLoad|InitialPurchase|FundTNAV|EquityStyleBox|BondStyleBox|AverageMarketCapital|AverageCreditQualityCode|EffectiveDuration|MorningstarRiskM255|AlphaM36|BetaM36|R2M36|StandardDeviationM36|SharpeM36|TrackRecordExtension"
+
+# {"total": 6,"page": 1,"pageSize": 10,"rows": [{"SecId": "0P0000XZHT","Name": "Vanguard S\u0026P 500 UCITS ETF CHF","PriceCurrency": "CHF","TenforeId": "182.8.VUSA","LegalName": "Vanguard S\u0026P 500 UCITS ETF CHF","ClosePrice": 92.78,"Yield_M12": 1.10881,"OngoingCharge": 0.07,"CategoryName": "US Large-Cap Blend Equity","Medalist_RatingNumber": 7,"StarRatingM255": 5,"SustainabilityRank": 3,"GBRReturnD1": 0.31,"GBRReturnW1": 0.77,"GBRReturnM1": 5.69,"GBRReturnM3": -7.06,"GBRReturnM6": -7.13,"GBRReturnM0": -6.23,"GBRReturnM12": 6.99,"GBRReturnM36": 11.35,"GBRReturnM60": 13.63,"GBRReturnM120": 13.87,"ManagerTenure": 13,"FundTNAV": 50294497525.4034,"EquityStyleBox": 2,"AverageMarketCapital": 236431.94516,"MorningstarRiskM255": 3,"AlphaM36": 0.3,"BetaM36": 0.99,"R2M36": 99.84,"StandardDeviationM36": 13.28036,"SharpeM36": 0.37642,"TrackRecordExtension": false}
+
+
+# STOCK
+# page=1&pageSize=10&sortOrder=Name%20asc&outputType=json&version=1&languageId=en-GB&currencyId=GBP&universeIds=E0EXG%24XLON&securityDataPoints=
+
+STOCK_DFLT_FIELDS = "SecId|LegalName|Name|IndustryName|SectorName|TenforeId|Universe|ExchangeId|Ticker|ClosePrice|MarketCap|DividendYield|PERatio|PEGRatio|MarketCountryName|EquityStyleBox|ReturnD1|ReturnW1|ReturnM1|ReturnM3|ReturnM6|ReturnM0|ReturnM12|ReturnM36|ReturnM60|ReturnM120|EBTMarginYear1|ROEYear1|ROICYear1|EPSGrowth3YYear1|RevenueGrowth3Y|DebtEquityRatio|NetMargin|ROATTM|ROETTM"
+
+# {"total": 1493,"page": 1,"pageSize": 10,"rows": [{"SecId": "0P00007P3V","LegalName": "1Spatial PLC","Name": "1Spatial PLC","IndustryName": "Software - Application","SectorName": "Technology","TenforeId": "151.1.SPA","Universe": "E0EXG$XLON","ExchangeId": "EX$$$$XLON","Ticker": "SPA","ClosePrice": 51.5,"MarketCap": 57320751,"PERatio": 526.32,"MarketCountryName": "United Kingdom","EquityStyleBox": 9,"ReturnD1": -1.9,"ReturnW1": -4.63,"ReturnM1": 6.19,"ReturnM3": -19.22,"ReturnM6": -23.13,"ReturnM0": -26.95,"ReturnM12": -32.24,"ReturnM36": 7.46,"ReturnM60": 21.44,"ReturnM120": -3.19,"EBTMarginYear1": 0.032709,"ROEYear1": 0.066184,"ROICYear1": 0.063687,"EPSGrowth3YYear1": 0.073876,"RevenueGrowth3Y": 9.5191,"DebtEquityRatio": 0.183209,"NetMargin": 0.045391,"ROATTM": 0.040584,"ROETTM": 0.085942},
+
+
+# TRUST
+# page=1&pageSize=10&sortOrder=LegalName%20asc&outputType=json&version=1&languageId=en-GB&currencyId=BAS&universeIds=CEEXG%24XLON&securityDataPoints=SecId%7CName%7CTenforeId%7CLegalName%7CHoldingTypeId%7CClosePrice%7CYield_M12%7COngoingCharge%7CStarRatingM255%7CSustainabilityRank%7CMedalist_RatingNumber%7CGBRReturnM0%7CGBRReturnM12%7CGBRReturnM36%7CGBRReturnM60%7CGBRReturnM120%7CTrackRecordExtension&filters=&term=&subUniverseId=
+# {"total": 1,"page": 1,"pageSize": 10,"rows": [{"SecId": "F000010M4U","Name": "Aberdeen Standard Asia Focus 2025 CULS","TenforeId": "151.1.AASC","LegalName": "Aberdeen Standard Asia Focus 2025 CULS","HoldingTypeId": 21,"ClosePrice": 101.05,"Yield_M12": 0,"OngoingCharge": 0.9,"SustainabilityRank": 1,"GBRReturnM0": 2.33,"GBRReturnM12": 4.18,"GBRReturnM36": -0.23,"GBRReturnM60": 1.3,"GBRReturnM120": -1.22,"TrackRecordExtension": false}] }
+
+
+# INDEX
+# page=1&pageSize=10&sortOrder=LegalName%20asc&outputType=json&version=1&languageId=en-GB&currencyId=GBP&universeIds=IXMSX%24%24ALL&securityDataPoints=SecId%7CName%7CPriceCurrency%7CTenforeId%7CLegalName%7CHoldingTypeId%7CClosePrice%7CGBRReturnD1%7CGBRReturnW1%7CGBRReturnM1%7CGBRReturnM3%7CGBRReturnM6%7CGBRReturnM0%7CGBRReturnM12%7CGBRReturnM36%7CGBRReturnM60%7CGBRReturnM120%7CTrackRecordExtension&filters=&term=&subUniverseId=
+# {"total": 52654,"page": 1,"pageSize": 10,"rows": [{"SecId": "F0000142AZ","Name": "Azimut Morningstar Italy All Fund GR EUR","PriceCurrency": "EUR","TenforeId": "28.10.F0000142AZ","LegalName": "Azimut Morningstar Italy All Funds GR EUR","HoldingTypeId": 7,"ClosePrice": 1578.24823,"GBRReturnD1": -0.05,"GBRReturnW1": -0.4,"GBRReturnM1": 1,"GBRReturnM3": 0.69,"GBRReturnM6": 1.55,"GBRReturnM0": 2.4,"GBRReturnM12": 3.22,"GBRReturnM36": 3,"GBRReturnM60": 1.63,"GBRReturnM120": 2.95},
+
+ASSET_TYPE = {
+    "E0": "stock",
+    "ET": "etf",
+    "FO": "fund",
+    "CE": "trust",
+    "IX": "index",
+}
 
 EXCHANGE = {
     'ARCX': 'NYSE Arca (Pacific Stock Exchange)',
@@ -146,6 +191,7 @@ FIELDS = [
     "PEGRatio",
     "PERatio",
     "PerformanceFeeActual",
+    "performanceId",
     "PriceCurrency",
     "QuantitativeRating",
     "R2M36",

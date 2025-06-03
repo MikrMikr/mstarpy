@@ -11,6 +11,7 @@ from .search import search_funds, token_investment_strategy
 from .utils import random_user_agent
 
 from .security import Security
+from typing import List, Dict, Any, Optional
 
 
 class Funds(Security):
@@ -43,6 +44,7 @@ class Funds(Security):
         itemRange: int = 0,
         filters: dict = {},
         proxies: dict = {},
+        params: Optional[Dict[str, Any]] = None,
     ):
 
         super().__init__(
@@ -53,6 +55,7 @@ class Funds(Security):
             itemRange=itemRange,
             filters=filters,
             proxies=proxies,
+            params=params,
         )
 
     def allocationMap(self):

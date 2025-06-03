@@ -1,4 +1,5 @@
 from .security import Security
+from typing import List, Dict, Any, Optional
 
 
 class Stock(Security):
@@ -28,6 +29,7 @@ class Stock(Security):
         itemRange: int = 0,
         filters: dict = {},
         proxies: dict = {},
+        params: Optional[Dict[str, Any]] = None,
     ):
 
         super().__init__(
@@ -38,6 +40,7 @@ class Stock(Security):
             itemRange=itemRange,
             filters=filters,
             proxies=proxies,
+            params=params,
         )
 
     def analysisData(self):
