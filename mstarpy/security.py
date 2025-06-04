@@ -6,12 +6,19 @@ import time
 import random
 
 from .error import not_200_response
-from .search import search_funds, search_stock, token_chart
-from .utils import APIKEY, SITE, ASSET_TYPE, random_user_agent
+from .search import (search_funds, 
+                     search_stock, 
+                     token_chart
+                     )
+from .utils import (
+    APIKEY,
+    SITE,
+    ASSET_TYPE, 
+    EXCHANGE,
+    random_user_agent
+    )
 from .api import request_with_retry
 from typing import List, Dict, Any, Optional, Union
-from tenacity import retry, stop_after_attempt, wait_exponential
-
 
 
 # with Universe field, we can detect the asset class
@@ -53,7 +60,6 @@ class Security:
         itemRange: int = 0,
         filters: dict = {},
         proxies: dict = {},
-        params: Optional[Dict[str, Any]] = None,
     ):
 
         if not isinstance(country, str):
@@ -64,6 +70,14 @@ class Security:
                 f'country parameter can only take one of the values: {", ".join(SITE.keys())}'
             )
 
+        if not isinstance(exchange, str):
+            raise TypeError("exchange parameter should be a string")
+    
+        if exchange and not exchange.upper() in EXCHANGE.keys():
+            raise ValueError(
+                f'Exchange parameter can only take one of the values: {", ".join(EXCHANGE.keys())}'
+            )
+        
         if not isinstance(pageSize, int):
             raise TypeError("pageSize parameter should be an integer")
 
@@ -167,46 +181,6 @@ class Security:
             else:
                 raise ValueError(f"0 {self.asset_type} found with the term {term}")
 
-
-    def __manual_configuration__(self, params: Dict[str, Any]):
-        try:
-            self.code = params["fundShareClassId"]
-            self.name = params["LegalName"]
-            self.isin = params.get("ISIN", None)
-            self.exchange = params.get("ExchangeId", None)
-            self.asset_type = ASSET_TYPE.get(params["Universe"][:2], None)
-
-            self.country = "gb" # TODO Not sure what is the best way to determine which API to use
-            self.site = SITE[self.country.lower()]["site"]
-
-            self.securityDataPoints = params # Save all params in case they are needed later
-
-            # bearer_token = token_chart()
-            # # url for nav
-            # url = f"https://www.us-api.morningstar.com/md-api/proxy_request/data_point_service/v1/universes"
-            # # header with bearer token
-            # headers = {
-            #     "user-agent": random_user_agent(),
-            #     "authorization": f"Bearer {bearer_token}",
-            #     "X-API-RequestId": str(uuid.uuid4()),
-            #     "X-API-CorrelationId": str(uuid.uuid4()),
-            #     "x-feed-id": str(uuid.uuid4()),
-            #     "md-package-version": "1.11.0",
-            #     "X-API-ComponentId": "analyticslab",
-            #     "X-API-Sourceapp": "morningstar-data",
-            #     "X-API-ProductId": "Direct",
-            #     # "Content-Type": "application/json",
-            # }
-            # # response
-            # response = requests.get(url, headers=headers, proxies=self.proxies)
-            # import pdb; pdb.set_trace()
-            # print(response.status_code)
-            # print(response.text)
-        except Exception as e:
-            print(f"Error {e} when manually configuring security")
-            import pdb; pdb.set_trace()
-        
-
     def GetData(self, field, params={}, headers={}, url_suffix="data"):
         """
         Generic function to use MorningStar global api.
@@ -259,7 +233,9 @@ class Security:
 
         return response.json()
 
-    def ltData(self, field, currency="EUR"):
+    def ltData(self, 
+               field:str, 
+               currency:str="EUR") -> dict:
         """
         Generic function to use MorningStar lt api.
 
@@ -301,7 +277,8 @@ class Security:
         else:
             return {}
 
-    def RealtimeData(self, url_suffix: str) -> dict:
+    def RealtimeData(self, 
+                     url_suffix: str) -> dict:
         """
         This function retrieves historical data of the specified fields
 
@@ -324,25 +301,35 @@ class Security:
         if not isinstance(url_suffix, str):
             raise TypeError("url_suffix parameter should be a string or a list")
         # url for realtime data
-        url = f"""https://www.morningstar.com/api/v2/stores/realtime/{url_suffix}?securities={self.code}"""
+        url = f"""https://www.morningstar.com/api/v2/stores/realtime/{url_suffix}"""
 
         # header with user agent
         headers = {
                     'user-agent': random_user_agent(), 
                     }
+        #parameters of the request
+        params = {"securities": self.code}
         # response
-        response = requests.get(url, headers=headers, proxies=self.proxies,
+        response = requests.get(url, 
+                                params=params, 
+                                headers=headers, 
+                                proxies=self.proxies,
                                 timeout=60)
         # manage response
         not_200_response(url, response)
         # result
         return response.json()
     
-    def TimeSeries(self, field, start_date, end_date, frequency="daily"):
+    def TimeSeries(self, 
+                   field:str|list, 
+                   start_date:datetime.datetime,
+                   end_date:datetime.datetime,
+                   frequency:str="daily") -> list:
         """
         This function retrieves historical data of the specified fields
 
         Args:
+            field (str|list) : field to retrieve, can be a string or a list of string
             start_date (datetime) : start date to get history
             end_date (datetime) : end date to get history
             frequency (str) : can be daily, weekly, monthly
@@ -396,14 +383,26 @@ class Security:
         # bearer token
         bearer_token = token_chart()
         # url for nav
-        url = f"https://www.us-api.morningstar.com/QS-markets/chartservice/v2/timeseries?query={self.code}:{queryField}&frequency={frequency_row[frequency]}&startDate={start_date.strftime('%Y-%m-%d')}&endDate={end_date.strftime('%Y-%m-%d')}&trackMarketData=3.6.3&instid=DOTCOM"
+        url = "https://www.us-api.morningstar.com/QS-markets/chartservice/v2/timeseries"
         # header with bearer token
         headers = {
             "user-agent": random_user_agent(),
             "authorization": f"Bearer {bearer_token}",
         }
+        #params of the request
+        params ={
+            "query" : f"{self.code}:{queryField}",
+            "frequency": frequency_row[frequency],
+            "startDate": start_date.strftime('%Y-%m-%d'),
+            "endDate": end_date.strftime('%Y-%m-%d'),
+            "trackMarketData": "3.6.3",
+            "instid": "DOTCOM",
+        }
         # response
-        response = requests.get(url, headers=headers, proxies=self.proxies)
+        response = requests.get(url,
+                                params=params,
+                                headers=headers, 
+                                proxies=self.proxies)
         # manage response
         not_200_response(url, response)
         # result
