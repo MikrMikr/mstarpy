@@ -60,7 +60,10 @@ class Security:
         itemRange: int = 0,
         filters: dict = {},
         proxies: dict = {},
-    ):
+        params: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        if not isinstance(asset_type, str):
+            raise TypeError("asset_type parameter should be a string")
 
         if not isinstance(country, str):
             raise TypeError("country parameter should be a string")
@@ -181,7 +184,51 @@ class Security:
             else:
                 raise ValueError(f"0 {self.asset_type} found with the term {term}")
 
-    def GetData(self, field, params={}, headers={}, url_suffix="data"):
+
+    def __manual_configuration__(self, params: Dict[str, Any]):
+        try:
+            self.code = params["fundShareClassId"]
+            self.name = params["LegalName"]
+            self.isin = params.get("ISIN", None)
+            self.exchange = params.get("ExchangeId", None)
+            self.asset_type = ASSET_TYPE.get(params["Universe"][:2], None)
+
+            self.country = "gb" # TODO Not sure what is the best way to determine which API to use
+            self.site = SITE[self.country.lower()]["site"]
+
+            self.securityDataPoints = params # Save all params in case they are needed later
+
+            # bearer_token = token_chart()
+            # # url for nav
+            # url = f"https://www.us-api.morningstar.com/md-api/proxy_request/data_point_service/v1/universes"
+            # # header with bearer token
+            # headers = {
+            #     "user-agent": random_user_agent(),
+            #     "authorization": f"Bearer {bearer_token}",
+            #     "X-API-RequestId": str(uuid.uuid4()),
+            #     "X-API-CorrelationId": str(uuid.uuid4()),
+            #     "x-feed-id": str(uuid.uuid4()),
+            #     "md-package-version": "1.11.0",
+            #     "X-API-ComponentId": "analyticslab",
+            #     "X-API-Sourceapp": "morningstar-data",
+            #     "X-API-ProductId": "Direct",
+            #     # "Content-Type": "application/json",
+            # }
+            # # response
+            # response = requests.get(url, headers=headers, proxies=self.proxies)
+            # import pdb; pdb.set_trace()
+            # print(response.status_code)
+            # print(response.text)
+        except Exception as e:
+            print(f"Error {e} when manually configuring security")
+
+        
+
+    def GetData(self, 
+                field:str, 
+                params:dict={}, 
+                headers:dict={}, 
+                url_suffix:str="data") -> dict|list:
         """
         Generic function to use MorningStar global api.
 
