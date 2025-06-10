@@ -9,6 +9,7 @@ import datetime
 from .error import no_site_error, not_200_response
 from .search import search_funds, token_investment_strategy
 from .utils import random_user_agent
+from .api import request_with_retry
 
 from .security import Security
 from typing import List, Dict, Any, Optional
@@ -451,10 +452,14 @@ class Funds(Security):
                     "tab": "1"
                   }
         
-        response = requests.get(url,
-                                params=params,
-                                headers=headers, 
-                                proxies=self.proxies)
+        response = request_with_retry("GET", url,
+                                    params=params,
+                                    headers=headers, 
+                                    proxies=self.proxies)
+        # response = requests.get(url,
+        #                         params=params,
+        #                         headers=headers, 
+        #                         proxies=self.proxies)
         not_200_response(url, response)
         soup = BeautifulSoup(response.text, "html.parser")
         cumulative_performance_date = (
@@ -1318,10 +1323,14 @@ class Funds(Security):
                     "id": self.code
                 }   
         # get HTML page overview
-        response = requests.get(url,
-                                params=params,
-                                headers=headers, 
-                                proxies=self.proxies)
+        response = request_with_retry("GET", url,
+                                    params=params,
+                                    headers=headers, 
+                                    proxies=self.proxies)
+        # response = requests.get(url,
+        #                         params=params,
+        #                         headers=headers, 
+        #                         proxies=self.proxies)
         # if page not found
         not_200_response(url, response)
 

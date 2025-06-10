@@ -92,7 +92,7 @@ def test_fund_invetment_look_up():
 
 
 def test_fund_multiple_request_method():
-    funds = Funds("LU1085283973", country="fr")
+    funds = Funds("IE00BMW4T172", country="gb")
     funds.code
     funds.isin
     funds.name

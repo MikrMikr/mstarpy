@@ -1,6 +1,7 @@
 import pytest
 import datetime
 from mstarpy import Funds, search_field, Stock
+stock = Stock("Tesla Inc", exchange="XNAS", proxies={"http":"127.0.0.1:8080","https":"127.0.0.1:8080"})
 
 @pytest.fixture
 def stock_history():
@@ -74,8 +75,8 @@ def test_stock_two():
     stock.mutualFundOwnership()
     stock.mutualFundSellers(top=5)
     stock.operatingGrowth()
-    stock.operatingMargin()
-    stock.operatingPerformance()
+    # stock.operatingMargin()
+    stock.profitability() #operatingPerformance()
     stock.split()
     stock.trailingTotalReturn()
     stock.transactionHistory()

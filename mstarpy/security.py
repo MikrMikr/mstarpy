@@ -25,8 +25,6 @@ from typing import List, Dict, Any, Optional, Union
 # done find all stock echange and create a search_equity method
 # add parameter exchange to Security class and search stocks if stock and exchange
 
-INTERNAL_SERVER_ERROR = "Something went wrong on our side!  For more details, please contact Analytics Lab support team at Morningstar. We apologize for any inconvenience this may have caused"
-
 class Security:
     """
     Parent class to access data about security
@@ -446,10 +444,14 @@ class Security:
             "instid": "DOTCOM",
         }
         # response
-        response = requests.get(url,
-                                params=params,
-                                headers=headers, 
-                                proxies=self.proxies)
+        response = request_with_retry("GET", url,
+                                    params=params,
+                                    headers=headers, 
+                                    proxies=self.proxies)
+        # response = requests.get(url,
+        #                         params=params,
+        #                         headers=headers, 
+        #                         proxies=self.proxies)
         # manage response
         not_200_response(url, response)
         # result

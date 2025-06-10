@@ -30,6 +30,18 @@ pip install git+https://github.com/Mael-J/mstarpy.git@master
 
 ## First commands
 
+### Look for securities with [search_security]
+
+Search for securities based on specified criteria.
+    
+This function searches for financial securities (stocks, bonds, funds, etc.) 
+matching the provided search term and optional filters. Returns a list of 
+securities with their associated metadata.
+
+``` python
+mstarpy.search_security(term, proxies={"http":"127.0.0.1:8080","https":"127.0.0.1:8080"})[0]
+```
+
 ### Look for funds with [search_funds]{.title-ref}
 
 You can look for funds by using the method [search_funds]{.title-ref}.
